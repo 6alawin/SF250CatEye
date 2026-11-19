@@ -2,6 +2,11 @@
 .env.*
 *.parquet
 *.csv
+*.csv.gz
+*.xlsx
+*.json
 *.json.gz
 __pycache__/
 .venv/
+.audit_deps/
+Openplay/
