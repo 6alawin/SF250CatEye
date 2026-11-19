@@ -127,12 +127,7 @@ function catEyeRangeLabel(player, cohort) {
 function catEyeValueCard(player, cohort) {
   const estimate = catEyeEstimate(player, cohort);
   if (!estimate) return `<div class="metric"><span>CatEye comparable range</span><strong>—</strong><small>ต้องมีผู้เล่นเทียบที่มีมูลค่าตลาดอย่างน้อย 5 คน</small></div>`;
-  const market = marketValues[String(player.player_id)];
-  const signal = !Number.isFinite(market) ? 'ไม่มีค่า Transfermarkt สำหรับเทียบ'
-    : market < estimate.low ? 'Transfermarkt ต่ำกว่าช่วงผู้เล่นเทียบ'
-    : market > estimate.high ? 'Transfermarkt สูงกว่าช่วงผู้เล่นเทียบ'
-    : 'Transfermarkt อยู่ในช่วงผู้เล่นเทียบ';
-  return `<div class="metric"><span>CatEye comparable range</span><strong>${marketValueFormatter.format(estimate.low)}–${marketValueFormatter.format(estimate.high)}</strong><small>P25–P75 · ${estimate.confidence} · ผู้เล่นเทียบ ${estimate.count} คน${estimate.ageMatched ? ' · อายุใกล้กัน' : ''}</small></div><div class="metric"><span>TM value vs peers</span><strong style="font-size:14px">${signal}</strong><small>เทียบค่าตลาดของผู้เล่นตำแหน่ง/สถิติใกล้กัน ไม่ใช่ราคาซื้อขาย</small></div>`;
+  return `<div class="metric"><span>CatEye comparable range</span><strong>${marketValueFormatter.format(estimate.low)}–${marketValueFormatter.format(estimate.high)}</strong><small>P25–P75 · ${estimate.confidence} · ผู้เล่นเทียบ ${estimate.count} คน${estimate.ageMatched ? ' · อายุใกล้กัน' : ''}</small></div>`;
 }
 
 function loadMarketValues() {
