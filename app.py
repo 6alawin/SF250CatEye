@@ -1,5 +1,6 @@
 import os
 import re
+import time
 from pathlib import Path
 
 import psycopg
@@ -12,6 +13,8 @@ load_dotenv(ROOT / ".env")
 SUMMARY = "openplay_player_season_extended.json.gz"
 DATASETS = {SUMMARY, "player_birthdays.json", "player_market_values.json", "player_profiles.json"}
 HEATMAP_NAME = re.compile(r"heatmap_(?:eng|esp|fra|ger|ita)_[0-9]{4}\.json\.gz")
+ASSET_CACHE = {}
+CACHE_CONTROL = "public, max-age=300, stale-while-revalidate=3600"
 
 
 @app.get("/")
@@ -37,33 +40,45 @@ def heatmap_file(name):
 
 def asset(name, content_type, gzip=False):
     try:
-        with psycopg.connect(os.environ["DATABASE_URL"], connect_timeout=8) as db:
-            size_row = db.execute(
-                "SELECT size_bytes FROM cateye_assets WHERE name = %s", (name,)
-            ).fetchone()
-            if size_row is None:
-                abort(404)
-            size = size_row[0]
-            start, end, status = 0, size, 200
-            headers = {"Accept-Ranges": "bytes", "Cache-Control": "no-store"}
-            if request.headers.get("Range"):
-                bounds = request.range
-                result = bounds.range_for_length(size) if bounds and bounds.units == "bytes" else None
-                if result is None:
-                    return Response(status=416, headers={"Content-Range": f"bytes */{size}"})
-                start, end = result
-                status = 206
-                headers["Content-Range"] = f"bytes {start}-{end - 1}/{size}"
-            if gzip:
-                headers["Content-Encoding"] = "gzip"
-            body = b""
-            if request.method != "HEAD":
-                body = db.execute(
-                    "SELECT substring(content FROM %s FOR %s) FROM cateye_assets WHERE name = %s",
-                    (start + 1, end - start, name),
-                ).fetchone()[0]
-            response = Response(body, status, headers, content_type=content_type)
-            response.content_length = end - start
-            return response
+        cached = ASSET_CACHE.get(name)
+        if cached is None or time.monotonic() - cached[3] >= 300:
+            with psycopg.connect(os.environ["DATABASE_URL"], connect_timeout=8) as db:
+                metadata = db.execute(
+                    "SELECT size_bytes, sha256 FROM cateye_assets WHERE name = %s", (name,)
+                ).fetchone()
+                if metadata is None:
+                    abort(404)
+                size, sha = metadata
+                if cached is None or cached[0] != sha:
+                    content = db.execute(
+                        "SELECT content FROM cateye_assets WHERE name = %s", (name,)
+                    ).fetchone()[0]
+                else:
+                    content = cached[2]
+            cached = (sha, size, content, time.monotonic())
+            ASSET_CACHE[name] = cached
+        sha, size, content, _ = cached
+        headers = {
+            "Accept-Ranges": "bytes",
+            "Cache-Control": CACHE_CONTROL,
+            "ETag": f'"{sha}"',
+        }
+        if gzip:
+            headers["Content-Encoding"] = "gzip"
+        if request.if_none_match.contains(sha):
+            return Response(status=304, headers=headers)
+        start, end, status = 0, size, 200
+        if request.headers.get("Range"):
+            bounds = request.range
+            result = bounds.range_for_length(size) if bounds and bounds.units == "bytes" else None
+            if result is None:
+                return Response(status=416, headers={"Content-Range": f"bytes */{size}"})
+            start, end = result
+            status = 206
+            headers["Content-Range"] = f"bytes {start}-{end - 1}/{size}"
+        body = content[start:end] if request.method != "HEAD" else b""
+        response = Response(body, status, headers, content_type=content_type)
+        response.content_length = end - start
+        return response
     except (psycopg.Error, KeyError):
         return Response("CatEye data is temporarily unavailable.", status=503)

@@ -9,7 +9,6 @@
 ```text
 Browser: index.html
   ├─ GET /openplay_player_season_extended.json.gz
-  ├─ GET /player_birthdays.json
   ├─ GET /player_profiles.json
   ├─ GET /player_market_values.json
   └─ GET /heatmap-data/heatmap_{league}_{season}.json.gz
@@ -18,7 +17,9 @@ Browser: index.html
 Flask/Gunicorn: app.py ── DATABASE_URL ── Render PostgreSQL: cateye_assets
 ```
 
-เบราว์เซอร์ไม่เชื่อมฐานข้อมูลโดยตรง `app.py` ตรวจชื่อไฟล์ที่อนุญาต ดึงเนื้อหาจาก `cateye_assets` และส่ง gzip/byte range เมื่อร้องขอ
+เบราว์เซอร์ไม่เชื่อมฐานข้อมูลโดยตรง `app.py` ตรวจชื่อไฟล์ที่อนุญาต ดึงเนื้อหาจาก `cateye_assets` และส่ง gzip/byte range เมื่อร้องขอ ข้อมูลมี ETag และ cache ฝั่งเบราว์เซอร์ 5 นาที; ฝั่งเว็บเซิร์ฟเวอร์เก็บไฟล์ในหน่วยความจำและตรวจฐานข้อมูลซ้ำทุก 5 นาที ทำให้การเปิดซ้ำไม่ต้องอ่าน BLOB ขนาดใหญ่จากฐานข้อมูลทุกครั้ง ส่วนวันเกิดอ่านจาก `player_profiles.json` พร้อมข้อมูลเท้า/ส่วนสูงในคำขอเดียว
+
+ไฟล์ summary ครอบคลุมหลายฤดูกาลและมีขนาด gzip ประมาณ 12.5 MB ในชุดข้อมูลที่ใช้ จึงยังต้องดาวน์โหลดและแปลง JSON ในการเปิดครั้งแรกหรือหลัง cache หมดอายุ โค้ดแปลงแถวใช้ลูปตามคอลัมน์โดยตรงเพื่อลดการสร้าง object ชั่วคราวหลายล้านชิ้น
 
 ## นิยามข้อมูลและสูตรพื้นฐาน
 
