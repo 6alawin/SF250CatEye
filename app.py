@@ -13,9 +13,10 @@ HEATMAP_NAME = re.compile(r"heatmap_(?:eng|esp|fra|ger|ita)_[0-9]{4}\.json\.gz")
 
 
 @app.get("/")
+@app.get("/index.html")
 @app.get("/demo.html")
 def demo():
-    return send_file(ROOT / "demo.html", max_age=0)
+    return send_file(ROOT / "index.html", max_age=0)
 
 
 @app.get("/<name>")

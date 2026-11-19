@@ -1,6 +1,6 @@
 # CatEye - SF250 byPiranYaa
 
-CatEye is a football scouting demo with player profiles, player similarity, role ranking, and event heatmaps. The interface loads the season summary, player metadata, and pitch-zone event counts from Render PostgreSQL through the web service.
+CatEye is a football scouting demo with player profiles, player similarity, role ranking, and event heatmaps. The `index.html` interface loads the season summary, player metadata, and pitch-zone event counts from Render PostgreSQL through the web service. No manual CSV upload is required.
 
 Configure a Python web service on Render in the same region as the database. Use `pip install -r requirements.txt` to build and `gunicorn --bind 0.0.0.0:$PORT app:app` to start. Set `DATABASE_URL` to the Render internal database URL in the service environment settings.
 
