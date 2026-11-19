@@ -10,6 +10,7 @@
 Browser: index.html
   ├─ GET /openplay_player_season_extended.json.gz
   ├─ GET /player_birthdays.json
+  ├─ GET /player_profiles.json
   ├─ GET /player_market_values.json
   └─ GET /heatmap-data/heatmap_{league}_{season}.json.gz
              │
@@ -105,7 +106,7 @@ Candidate ใช้ฤดูกาลล่าสุด 1 ฤดูกาล ห
 - Clean Sheet ที่มีในชุดข้อมูลคือ **Team Clean Sheets**: จำนวนเกมที่ทีมไม่เสียประตูในเกมที่ผู้เล่นลงสนาม ไม่ใช่ Clean Sheet รายบุคคลที่คำนวณจากนาทีที่ผู้เล่นอยู่ในสนาม
 - ระยะวิ่งต่อเกมและ Top Speed ไม่คำนวณ เพราะข้อมูล Openplay ชุดนี้ไม่มี tracking ของการวิ่ง
 
-## Player Similarity
+## Compare / Player Similarity
 
 ใช้ Feature แยกตามตระกูลตำแหน่ง และเมื่อ Candidate บทบาทเดียวกันมีอย่างน้อย 5 คน จะใช้ชุดตัวชี้วัดตาม `role_group` โดยยังจำกัด Candidate ให้อยู่ตระกูลตำแหน่งเดียวกับ Reference ก่อนเสมอ หาก Candidate บทบาทเดียวกันมีน้อยกว่า 5 คน จะ fallback ไปใช้กลุ่มตัวชี้วัดของตระกูลตำแหน่ง
 
@@ -134,6 +135,8 @@ Candidate ใช้ฤดูกาลล่าสุด 1 ฤดูกาล ห
 5. เรียงคะแนนจากมากไปน้อยและแสดง 15 อันดับแรก
 
 `0` หมายถึงเวกเตอร์ชี้คนละทิศ, `50` คือ cosine 0, `100` คือทิศทางสถิติเดียวกัน คะแนนนี้เป็นความใกล้ของรูปแบบตัวเลขในกลุ่มตำแหน่ง/บทบาทที่เลือก ไม่ได้ยืนยันว่าเล่นแท็กติกเดียวกัน หน้าแสดงชื่อหมวดและ Feature ที่นำไปคำนวณไว้เหนือผลลัพธ์ด้วย
+
+คลิกชื่อ Candidate เพื่อเปิด Compare ซึ่งแสดง Reference และ Candidate แบบวางคู่กัน พร้อมอายุปัจจุบัน เท้าที่ถนัด ส่วนสูง สัญชาติ นาที/นัด ประตู/แอสซิสต์ มูลค่าตลาด และ CatEye Estimate. กราฟเรดาร์แสดงค่าเฉลี่ย percentile ของตัวชี้วัดในแต่ละหมวด โดย `P(x) = 100 × (L + 0.5E) / N`; `L` คือจำนวน Candidate ใน cohort ที่มีค่าต่ำกว่า `x`, `E` คือจำนวนที่เท่ากัน, `N` คือจำนวนใน cohort. ค่าที่ต่ำดีกว่าจะกลับทิศ `100 − P`. ตารางด้านล่างแสดงผลต่างของแต่ละ Feature และ Heatmap ของผู้เล่นทั้งคู่โหลดให้อัตโนมัติใน Compare; เลือกดู Touches, All events, Shots หรือ Passes ได้ในหน้าต่างเดียวกัน. จึงไม่มีแท็บ Heatmap แยกแล้ว
 
 คลิกชื่อ Candidate เพื่อเปิดหน้าต่างเทียบตัวชี้วัดกับ Reference: `Δ% = 100 × (Candidate − Reference) / |Reference|`; สำหรับสถิติที่ค่ายิ่งน้อยยิ่งดีจะกลับทิศเฉพาะการตัดสินว่าดีกว่าหรือด้อยกว่า ส่วนเปอร์เซ็นต์ยังแสดงขนาดความต่างจากค่า Reference. สรุป `สัดส่วนสถิติที่ดีกว่า = 100 × จำนวนตัวชี้วัดที่ Candidate ดีกว่า / จำนวนตัวชี้วัดที่นำมาเทียบ`. หากค่า Reference เป็น 0 เปอร์เซ็นต์ของตัวชี้วัดนั้นไม่มีนิยาม จึงแสดงขีด และบอกกรณี Reference = 0 แทน
 
@@ -244,10 +247,11 @@ feature ที่ค่าน้อยดีกว่า ได้แก่ `mis
 ## ข้อมูลและข้อจำกัด
 
 - `openplay_player_season_extended.json.gz`: summary ผู้เล่นรายฤดูกาลที่เตรียมจาก Openplay รวมรายการยุโรปตามชุดข้อมูล
-- `player_birthdays.json`: วันเกิดที่จับคู่กับผู้เล่นเพื่อคำนวณอายุปัจจุบัน
+- `player_birthdays.json`: วันเกิดจาก Transfermarkt ที่จับคู่กับ Openplay player ID ด้วยชื่อเฉพาะและส่วนสูงต่างกันไม่เกิน 3 ซม.
+- `player_profiles.json`: เท้าที่ถนัด, ส่วนสูง, สัญชาติ และวันเกิดที่จับคู่จากข้อมูลผู้เล่น Transfermarkt
 - `player_market_values.json`: ค่าอ้างอิง Transfermarkt ใน EUR, snapshot 6 ก.ค. 2026
 - `heatmap_{eng|esp|fra|ger|ita}_{season}.json.gz`: 60 Heatmap สำหรับ 5 ลีก × 12 ฤดูกาล
-- Render DB มี asset สำหรับ Demo 63 ไฟล์: summary 3 ไฟล์ + Heatmap 60 ไฟล์ รวมประมาณ 21.9 MB
+- Render DB มี asset สำหรับ Demo 64 ไฟล์: summary/โปรไฟล์ 4 ไฟล์ + Heatmap 60 ไฟล์
 - Openplay ไม่มี tracking สำหรับระยะวิ่งและ Top Speed; Team Clean Sheets อาจไม่เท่ากับ Clean Sheet รายบุคคล
 - Parquet ต้นฉบับอยู่ที่ `D:\Projects\SF250project\Openplay\Openplay_Event`; หน้า Demo ใช้ summary/Heatmap จาก DB จึงไม่ต้องอัปโหลด CSV
 - `import_data.py --event-dir <Openplay_Event-folder>` รองรับเก็บ Parquet ดิบใน `openplay_event_files` แต่ Event ทั้งชุดประมาณ 868 MB ก่อน PostgreSQL/WAL; ต้องเพิ่มพื้นที่ DB ก่อนใช้
@@ -255,8 +259,8 @@ feature ที่ค่าน้อยดีกว่า ได้แก่ `mis
 ## แหล่งข้อมูลและเครดิต
 
 - **สถิติการแข่งขัน, ผู้เล่นรายนัด/ฤดูกาล และ Heatmap:** [Openplay](https://github.com/nlbair/openplay) โดย Noah Bair. ข้อมูลใช้ใบอนุญาต [Creative Commons Attribution 4.0 (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/) และกำหนดเครดิต `openplay (Noah Bair)`.
-- **มูลค่าตลาดและข้อมูลโปรไฟล์ผู้เล่น:** [transfermarkt-datasets](https://github.com/dcaribou/transfermarkt-datasets), ซึ่งรวมข้อมูลที่มาจาก Transfermarkt. snapshot มูลค่าตลาดที่ใช้ใน `player_market_values.json` คือ 6 กรกฎาคม 2026; เป็นมูลค่าประเมิน ไม่ใช่ค่าธรรมเนียมซื้อขายจริง.
-- **วันเกิด/อายุ:** หน้าเว็บอ่านจาก `player_birthdays.json` ซึ่งเป็นรายการจับคู่ผู้เล่นของโปรเจกต์. ไฟล์นี้ไม่ได้เก็บ URL ต้นทางแยกรายผู้เล่น จึงควรอ่านเป็นข้อมูลอ้างอิงที่จับคู่ไว้ ไม่ใช่ข้อมูลสดจาก API.
+- **มูลค่าตลาดและข้อมูลโปรไฟล์ผู้เล่น:** [transfermarkt-datasets](https://github.com/dcaribou/transfermarkt-datasets); [schema ตาราง `players`](https://github.com/dcaribou/transfermarkt-datasets/blob/master/data/prep/dataset-metadata.json) มีวันเกิด, `foot`, ส่วนสูง และสัญชาติ. snapshot มูลค่าตลาดที่ใช้ใน `player_market_values.json` คือ 6 กรกฎาคม 2026; เป็นมูลค่าประเมิน ไม่ใช่ค่าธรรมเนียมซื้อขายจริง.
+- **การจับคู่วันเกิด/โปรไฟล์:** `build_birthdays.py` จับคู่ชื่อที่ normalize แล้ว โดยรับเฉพาะชื่อไม่ซ้ำและส่วนสูงจาก Openplay/Transfermarkt ต่างกันไม่เกิน 3 ซม.; สร้าง `player_birthdays.json` และ `player_profiles.json`. น้ำหนักไม่อยู่ในชุด fields ที่ใช้ จึงไม่แสดง.
 - **ค่าที่ CatEye แสดง:** Goal/Assist ที่แปลงจาก rate, เปอร์เซ็นไทล์, Similarity, Role Ranking, Heatmap score และ CatEye Estimate เป็นค่าคำนวณของโปรเจกต์จากแหล่งข้างต้น ไม่ใช่ตัวชี้วัดหรือราคาที่ผู้ให้ข้อมูลต้นทางรับรอง.
 
 เครดิต Openplay ที่แสดงในหน้าเว็บ: `Data attribution: openplay (Noah Bair), CC BY 4.0.`
@@ -265,9 +269,10 @@ feature ที่ค่าน้อยดีกว่า ได้แก่ `mis
 
 | ไฟล์ | หน้าที่ |
 |---|---|
-| `index.html` | UI, filters, profile, similarity, role ranking, heatmap และ valuation |
+| `index.html` | UI, filters, profile, Compare/Similarity พร้อมเรดาร์และ Heatmap, role ranking และ valuation |
 | `app.py` | Flask routes และอ่าน asset จาก PostgreSQL |
 | `build_heatmaps.py` | สร้าง Heatmap gzip JSON จาก Event Parquet |
+| `build_birthdays.py` | สร้าง DOB และข้อมูลโปรไฟล์ที่จับคู่กับ Openplay IDs จาก Transfermarkt players |
 | `import_data.py` | สร้างตารางและนำเข้า summary/Heatmap; ตรวจ SHA-256 และข้ามไฟล์ที่เหมือนเดิม |
 | `requirements.txt` | Flask, python-dotenv, Gunicorn, psycopg |
 | `.gitignore` | ป้องกัน `.env` และไฟล์ข้อมูลท้องถิ่นไม่ให้ถูก commit |
@@ -305,14 +310,15 @@ python -m flask --app app run
 ติดตั้ง DuckDB และสร้าง Heatmap จากโฟลเดอร์ที่มี Event Parquet Big Five 60 ไฟล์:
 
 ```powershell
-pip install duckdb
+pip install duckdb pandas
 python build_heatmaps.py <Openplay_Event-folder> <heatmap-output-folder>
 ```
 
 ตั้ง `DATABASE_URL` เป็น External Database URL ใน environment ของเครื่อง แล้วนำเข้า:
 
 ```powershell
+python build_birthdays.py
 python import_data.py <summary-folder> <heatmap-output-folder>
 ```
 
-โฟลเดอร์ summary ต้องมี `openplay_player_season_extended.json.gz`, `player_birthdays.json`, `player_market_values.json` ตัวนำเข้ารันซ้ำได้และข้ามไฟล์ checksum ตรงกัน
+โฟลเดอร์ summary ต้องมี `openplay_player_season_extended.json.gz`, `player_birthdays.json`, `player_profiles.json`, `player_market_values.json`. `build_birthdays.py` ใช้ `transfermarkt_players.csv.gz` และ Openplay `players.parquet` เพื่อสร้างไฟล์วันเกิด/โปรไฟล์. ตัวนำเข้ารันซ้ำได้และข้ามไฟล์ checksum ตรงกัน. หากต้องอัปโหลดหรืออัปเดตเฉพาะไฟล์เดียว ใช้ `python import_data.py <summary-folder> --asset-only player_profiles.json` โดยไม่ต้องมี Heatmap folder
