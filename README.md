@@ -252,7 +252,14 @@ feature ที่ค่าน้อยดีกว่า ได้แก่ `mis
 - Parquet ต้นฉบับอยู่ที่ `D:\Projects\SF250project\Openplay\Openplay_Event`; หน้า Demo ใช้ summary/Heatmap จาก DB จึงไม่ต้องอัปโหลด CSV
 - `import_data.py --event-dir <Openplay_Event-folder>` รองรับเก็บ Parquet ดิบใน `openplay_event_files` แต่ Event ทั้งชุดประมาณ 868 MB ก่อน PostgreSQL/WAL; ต้องเพิ่มพื้นที่ DB ก่อนใช้
 
-แหล่งข้อมูลการแข่งขัน: [Openplay](https://github.com/nlbair/openplay), CC BY 4.0. ค่าอ้างอิงตลาด: [Transfermarkt datasets](https://github.com/dcaribou/transfermarkt-datasets)
+## แหล่งข้อมูลและเครดิต
+
+- **สถิติการแข่งขัน, ผู้เล่นรายนัด/ฤดูกาล และ Heatmap:** [Openplay](https://github.com/nlbair/openplay) โดย Noah Bair. ข้อมูลใช้ใบอนุญาต [Creative Commons Attribution 4.0 (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/) และกำหนดเครดิต `openplay (Noah Bair)`.
+- **มูลค่าตลาดและข้อมูลโปรไฟล์ผู้เล่น:** [transfermarkt-datasets](https://github.com/dcaribou/transfermarkt-datasets), ซึ่งรวมข้อมูลที่มาจาก Transfermarkt. snapshot มูลค่าตลาดที่ใช้ใน `player_market_values.json` คือ 6 กรกฎาคม 2026; เป็นมูลค่าประเมิน ไม่ใช่ค่าธรรมเนียมซื้อขายจริง.
+- **วันเกิด/อายุ:** หน้าเว็บอ่านจาก `player_birthdays.json` ซึ่งเป็นรายการจับคู่ผู้เล่นของโปรเจกต์. ไฟล์นี้ไม่ได้เก็บ URL ต้นทางแยกรายผู้เล่น จึงควรอ่านเป็นข้อมูลอ้างอิงที่จับคู่ไว้ ไม่ใช่ข้อมูลสดจาก API.
+- **ค่าที่ CatEye แสดง:** Goal/Assist ที่แปลงจาก rate, เปอร์เซ็นไทล์, Similarity, Role Ranking, Heatmap score และ CatEye Estimate เป็นค่าคำนวณของโปรเจกต์จากแหล่งข้างต้น ไม่ใช่ตัวชี้วัดหรือราคาที่ผู้ให้ข้อมูลต้นทางรับรอง.
+
+เครดิต Openplay ที่แสดงในหน้าเว็บ: `Data attribution: openplay (Noah Bair), CC BY 4.0.`
 
 ## ไฟล์หลัก
 
