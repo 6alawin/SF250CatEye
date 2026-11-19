@@ -9,7 +9,7 @@ sys.path.insert(0, str(ROOT / ".audit_deps"))
 import duckdb
 import pandas as pd
 
-OPENPLAY_PLAYERS = Path(r"D:\Openplay\Openplay_Event\players.parquet")
+OPENPLAY_PLAYERS = ROOT / "Openplay" / "Openplay_Event" / "players.parquet"
 TRANSFERMARKT_PLAYERS = ROOT / "transfermarkt_players.csv.gz"
 
 
