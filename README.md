@@ -107,21 +107,33 @@ Candidate ใช้ฤดูกาลล่าสุด 1 ฤดูกาล ห
 
 ## Player Similarity
 
-ใช้ 15 features: `passes`, `pass_pct`, `progressive_passes`, `passes_final_third`, `key_passes`, `xg`, `npxg`, `xa`, `assists`, `goals`, `dribbles_completed`, `tackles_won`, `interceptions`, `ball_recoveries`, `clearances`
+ใช้ Feature แยกตามตระกูลตำแหน่ง และเมื่อ Candidate บทบาทเดียวกันมีอย่างน้อย 5 คน จะใช้ชุดตัวชี้วัดตาม `role_group` โดยยังจำกัด Candidate ให้อยู่ตระกูลตำแหน่งเดียวกับ Reference ก่อนเสมอ หาก Candidate บทบาทเดียวกันมีน้อยกว่า 5 คน จะ fallback ไปใช้กลุ่มตัวชี้วัดของตระกูลตำแหน่ง
+
+| ตระกูล/บทบาท | หมวดและตัวชี้วัด |
+|---|---|
+| GK / Goalkeeper | Shot stopping: saves, claims, claims failed, punches, smothers, keeper pickups; Sweeping: sweeper actions, interceptions; Distribution: passes, pass accuracy, completed long balls, long-ball accuracy, keeper throws, goal kicks, progressive passes |
+| CB / Defender | Defending: tackles won, interceptions, clearances, shot/pass blocks, recoveries, aerials won, dribbled past; Build-up: passes, pass accuracy, progressive/final-third passes, completed long balls; Risk: errors, errors leading to shots/goals, dispossessed |
+| FB / Defender | บทบาท Defender: ใช้ชุด Defender เมื่อมีอย่างน้อย 5 คน; fallback ตระกูล FB: Wide progression (progressive passes, completed dribbles, dribble success, final-third passes, completed crosses, cross accuracy, passes into box, fouls won), Defending (tackles won, tackle success, interceptions, recoveries, dribbled past, clearances), Chance creation (key passes, xA, assists, big chances created, completed crosses) |
+| CM / Midfielder | Build-up & progression: passes, pass accuracy, progressive/final-third/into-box passes, through balls, completed dribbles; Chance creation: key passes, xA, assists, big chances created; Defending: recoveries, tackles, interceptions, pass/shot blocks |
+| AM / Attacking Midfielder | Creation: key passes, xA, assists, big chances created, through balls, passes into box; Goal threat: xG, npxG, goals, shots in box/on target, big chances; Carrying: completed dribbles, fouls won, dispossessed |
+| AM / Wide Attacker | Wide creation: completed crosses, crosses, key passes, xA, assists, big chances created, passes into box; Carrying: completed dribbles, fouls won; Goal threat: xG, goals, shots in box, big chances |
+| FW / Striker | Goal threat: xG, npxG, goals, non-penalty goals, shots in/out of box, shots on target, big chances, missed big chances, headed goals; Creation & link play: xA, assists, key passes, completed dribbles, fouls won, offsides, dispossessed |
+
+กลุ่ม FB ใช้บทบาท Defender หากมี Candidate บทบาทเดียวกันพอ ส่วน Winger ใช้ Wide Attacker; บทบาทอื่นที่ไม่อยู่ในตาราง fallback ไปใช้ชุดตัวชี้วัดของตระกูลตำแหน่ง
 
 ### ขั้นตอน
 
-1. ตัด Reference คนเดียวกันออกจาก Candidate
-2. คำนวณค่าเฉลี่ยและส่วนเบี่ยงเบนมาตรฐานแบบประชากรในกลุ่ม `[Reference + Candidates]`:
+1. เลือก Candidate ในตระกูลตำแหน่งเดียวกับ Reference; หากกลุ่มบทบาทเดียวกันมีอย่างน้อย 5 คน ใช้เฉพาะกลุ่มบทบาทนั้น แล้วตัด Reference คนเดียวกันออกจาก Candidate
+2. คำนวณค่าเฉลี่ยและส่วนเบี่ยงเบนมาตรฐานแบบประชากรในกลุ่ม `[Reference + Candidate cohort]` สำหรับแต่ละ Feature:
    - `μ_f = Σx_f / N`
    - `σ_f = sqrt(Σ(x_f − μ_f)^2 / N)`; ถ้า `σ_f = 0` ใช้ 1 เพื่อเลี่ยงการหารด้วยศูนย์
 3. แปลงแต่ละ feature เป็น **Z-score / Standard Score**: `z_f = (x_f − μ_f) / σ_f`
-4. หาความคล้ายด้วย **Cosine Similarity**:
-   - `cos(A,B) = Σ(A_f B_f) / (sqrt(ΣA_f²) × sqrt(ΣB_f²))`
+4. ให้น้ำหนักหมวดเท่ากันด้วยการคูณ Z-score ทุก Feature ในหมวดที่มี `k` Feature ด้วย `1 / sqrt(k)`, จากนั้นหาความคล้ายด้วย **Cosine Similarity**:
+   - `cos(A,B) = Σ(A_f B_f) / (sqrt(ΣA_f²) × sqrt(ΣB_f²))` โดยรวมทุก Feature หลังถ่วงน้ำหนัก
    - `Similarity = clamp(50 × (cos(A,B) + 1), 0, 100)`
 5. เรียงคะแนนจากมากไปน้อยและแสดง 15 อันดับแรก
 
-`0` หมายถึงเวกเตอร์ชี้คนละทิศ, `50` คือ cosine 0, `100` คือทิศทางสถิติเดียวกัน คะแนนนี้เป็นความใกล้ของรูปแบบตัวเลข ไม่ได้ยืนยันว่าเล่นแท็กติกหรือบทบาทเดียวกัน
+`0` หมายถึงเวกเตอร์ชี้คนละทิศ, `50` คือ cosine 0, `100` คือทิศทางสถิติเดียวกัน คะแนนนี้เป็นความใกล้ของรูปแบบตัวเลขในกลุ่มตำแหน่ง/บทบาทที่เลือก ไม่ได้ยืนยันว่าเล่นแท็กติกเดียวกัน หน้าแสดงชื่อหมวดและ Feature ที่นำไปคำนวณไว้เหนือผลลัพธ์ด้วย
 
 ## Role Ranking
 
