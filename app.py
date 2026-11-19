@@ -3,10 +3,12 @@ import re
 from pathlib import Path
 
 import psycopg
+from dotenv import load_dotenv
 from flask import Flask, Response, abort, request, send_file
 
 app = Flask(__name__)
 ROOT = Path(__file__).resolve().parent
+load_dotenv(ROOT / ".env")
 SUMMARY = "openplay_player_season_extended.json.gz"
 DATASETS = {SUMMARY, "player_birthdays.json", "player_market_values.json"}
 HEATMAP_NAME = re.compile(r"heatmap_(?:eng|esp|fra|ger|ita)_[0-9]{4}\.json\.gz")
