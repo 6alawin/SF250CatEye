@@ -9,7 +9,7 @@ app = Flask(__name__)
 ROOT = Path(__file__).resolve().parent
 SUMMARY = "openplay_player_season_extended.json.gz"
 DATASETS = {SUMMARY, "player_birthdays.json", "player_market_values.json"}
-EVENT_NAME = re.compile(r"(?:events_(?:eng|esp|fra|ger|ita)_[0-9]{4}|players)\.parquet")
+HEATMAP_NAME = re.compile(r"heatmap_(?:eng|esp|fra|ger|ita)_[0-9]{4}\.json\.gz")
 
 
 @app.get("/")
@@ -25,11 +25,11 @@ def dataset(name):
     return asset(name, "application/json", gzip=name == SUMMARY)
 
 
-@app.get("/openplay-data/<name>")
-def event_file(name):
-    if not EVENT_NAME.fullmatch(name):
+@app.get("/heatmap-data/<name>")
+def heatmap_file(name):
+    if not HEATMAP_NAME.fullmatch(name):
         abort(404)
-    return asset(name, "application/octet-stream")
+    return asset(name, "application/json", gzip=True)
 
 
 def asset(name, content_type, gzip=False):
