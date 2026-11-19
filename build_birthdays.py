@@ -30,11 +30,16 @@ tm = tm.dropna(subset=["name", "date_of_birth", "height_in_cm"]).copy()
 tm["name_key"] = tm.name.map(normalize_name)
 tm["dob"] = tm.date_of_birth.astype(str).str[:10]
 tm = tm[tm.dob.str.fullmatch(r"\d{4}-\d{2}-\d{2}")]
-players = players[players.name_key.ne("") & players.height_cm.notna()]
+players = players[players.name_key.ne("")].copy()
+tm = tm[tm.name_key.ne("")].copy()
+# Prefer the previous height-verified match. For unique names, fall back to a
+# name-only match when Openplay height is missing or differs; Openplay and
+# Transfermarkt use separate IDs and some current players have stale heights.
 players = players[~players.name_key.duplicated(keep=False)]
 tm = tm[~tm.name_key.duplicated(keep=False)]
 matched = players.merge(tm, on="name_key")
-matched = matched[(matched.height_cm - matched.height_in_cm).abs() <= 3]
+matched["height_diff"] = (matched.height_cm - matched.height_in_cm).abs()
+matched["height_verified"] = matched.height_cm.notna() & (matched.height_diff <= 3)
 
 def text_or_none(value):
     return None if pd.isna(value) else str(value).strip() or None
